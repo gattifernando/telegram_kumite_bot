@@ -16,6 +16,7 @@ const comandos = `
 Comandos que o Bot responde:
 
 /responda - Chat GPT
+/imagine - Chat GPT (imagens)
 Discordo
 Argumente (lerolero)
 Boca de leite (audio)
@@ -139,6 +140,61 @@ bot.command("responda", async (ctx) => {
     } else {
       ctx.sendMessage("Por favor, use /responda para perguntar");
     }
+  }
+});
+
+// Gerando imagem de resposta
+const getImage = async (text) => {
+  try {
+    const response = await openai.createImage({
+      prompt: text,
+      n: 1,
+      size: "512x512",
+    });
+
+    return response.data.data[0].url;
+  } catch (error) {
+    console.log("error");
+  }
+};
+
+bot.command("imagine", async (ctx) => {
+  const text = ctx.message.text?.replace("/imagine", "")?.trim().toLowerCase();
+  if (text) {
+    const res = await getImage(text);
+
+    if (res) {
+      ctx.sendChatAction("upload_photo");
+      if (ctx.message.message_id) {
+        ctx.telegram.sendPhoto(ctx.message.chat.id, res, {
+          reply_to_message_id: ctx.message.message_id,
+        });
+      } else {
+        ctx.sendPhoto(res);
+      }
+    } else {
+      if (ctx.message.message_id) {
+        ctx.telegram.sendMessage(
+          ctx.message.chat.id,
+          "obs.: Não consigo gerar imagem para este texto\n\nE lembre-se: use este bot sem sacanagem, senão pode rolar um block, mané.",
+          {
+            reply_to_message_id: ctx.message.message_id,
+          }
+        );
+      } else {
+        ctx.sendMessage(
+          "Não consigo gerar imagem para este texto\n\nE lembre-se: use este bot sem sacanagem, senão pode rolar um block, mané."
+        );
+      }
+    }
+  } else {
+    ctx.telegram.sendMessage(
+      ctx.message.chat.id,
+      "Por favor, use /imagine para pedir ao Chat GPT para criar uma imagem.",
+      {
+        reply_to_message_id: ctx.message.message_id,
+      }
+    );
   }
 });
 
